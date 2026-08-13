@@ -7,14 +7,13 @@ import hashlib
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="🏥 MediCare", layout="wide")
+st.set_page_config(page_title="🏥 MediCare Odoo", layout="wide", initial_sidebar_state="expanded")
 
 # ========== BASE DE DONNÉES ==========
 def init_db():
     conn = sqlite3.connect('medicare.db')
     c = conn.cursor()
     
-    # Tables
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE, password TEXT, role TEXT, nom TEXT, prenom TEXT
@@ -46,7 +45,6 @@ def init_db():
         patient_id INTEGER, montant REAL, date_emission TEXT, date_echeance TEXT, statut TEXT, description TEXT
     )''')
     
-    # Admin par défaut
     c.execute("SELECT * FROM users WHERE username='admin'")
     if not c.fetchone():
         c.execute("INSERT INTO users (username, password, role, nom, prenom) VALUES (?,?,?,?,?)",
@@ -88,162 +86,383 @@ def login(username, password):
         return True
     return False
 
-# ========== STYLE ODOO ==========
+# ========== DESIGN ODOO MEDICAL ULTRA-PRO ==========
 st.markdown("""
 <style>
-    /* Import Google Font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
-    * { font-family: 'Inter', sans-serif; }
-    
-    /* Sidebar Odoo Style */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #1a2b4a 0%, #0f1a2e 100%) !important;
-        padding-top: 20px !important;
+    * {
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
     }
     
+    /* ===== SIDEBAR ODOO ===== */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #1a2332 0%, #0d1520 100%) !important;
+        padding: 20px 16px !important;
+        border-right: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    
+    /* Logo Odoo Style */
+    .odoo-logo {
+        text-align: center;
+        padding: 16px 0 24px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        margin-bottom: 20px;
+    }
+    
+    .odoo-logo .icon {
+        font-size: 42px;
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    .odoo-logo h1 {
+        color: #ffffff !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        letter-spacing: -0.5px;
+    }
+    
+    .odoo-logo .sub {
+        color: #6b8cae !important;
+        font-size: 11px !important;
+        font-weight: 400 !important;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+    
+    /* Menu Odoo */
     .css-1d391kg .stRadio label {
-        color: #a8b8c8 !important;
+        color: #8a9bb5 !important;
         font-weight: 500 !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         padding: 10px 16px !important;
         border-radius: 8px !important;
-        transition: all 0.3s !important;
+        transition: all 0.25s ease !important;
         margin: 2px 0 !important;
+        border-left: 3px solid transparent !important;
     }
     
     .css-1d391kg .stRadio label:hover {
-        background: rgba(255,255,255,0.08) !important;
-        color: white !important;
+        background: rgba(255,255,255,0.06) !important;
+        color: #ffffff !important;
+        border-left-color: #6b8cae !important;
     }
     
     .css-1d391kg .stRadio label[data-baseweb="radio"] {
-        background: rgba(44, 62, 107, 0.5) !important;
-        color: white !important;
-        border-left: 3px solid #4a90d9 !important;
+        background: rgba(107, 140, 174, 0.12) !important;
+        color: #ffffff !important;
+        border-left-color: #6b8cae !important;
+        font-weight: 600 !important;
     }
     
-    /* Odoo Cards */
+    /* User info sidebar */
+    .sidebar-user {
+        padding: 16px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 10px;
+        margin-top: 16px;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .sidebar-user .name {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .sidebar-user .role {
+        color: #6b8cae;
+        font-size: 12px;
+        font-weight: 400;
+    }
+    
+    .sidebar-user .badge-role {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        background: #6b8cae;
+        color: #1a2332;
+        margin-top: 4px;
+    }
+    
+    /* ===== ODOO CARDS ===== */
     .odoo-card {
-        background: white;
+        background: #ffffff;
         padding: 24px;
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        border: 1px solid #e8edf3;
-        transition: all 0.3s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid #eef2f6;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
     }
     
-    .odoo-card:hover {
-        box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-        transform: translateY(-2px);
+    .odoo-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6b8cae, #4a6a8a);
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
-    .odoo-card .icon { font-size: 28px; margin-bottom: 8px; }
-    .odoo-card .number { font-size: 32px; font-weight: 700; color: #1a2b4a; }
-    .odoo-card .label { color: #6b7a8f; font-size: 14px; font-weight: 500; margin-top: 4px; }
-    .odoo-card .trend { font-size: 12px; font-weight: 600; padding: 2px 12px; border-radius: 20px; display: inline-block; margin-top: 8px; }
-    .trend-up { background: #e8f5e9; color: #2e7d32; }
-    .trend-down { background: #fde8e8; color: #c62828; }
+    .odoo-card:hover {
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        border-color: #dce3ec;
+    }
     
-    /* Title */
-    .odoo-title {
-        font-size: 24px;
+    .odoo-card:hover::before {
+        opacity: 1;
+    }
+    
+    .odoo-card .card-icon {
+        font-size: 28px;
+        margin-bottom: 12px;
+        display: inline-block;
+    }
+    
+    .odoo-card .card-number {
+        font-size: 34px;
         font-weight: 700;
-        color: #1a2b4a;
+        color: #1a2332;
+        line-height: 1.1;
+        letter-spacing: -1px;
+    }
+    
+    .odoo-card .card-label {
+        color: #6b7a8f;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+    
+    .odoo-card .card-trend {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 14px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 10px;
+    }
+    
+    .trend-up {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .trend-down {
+        background: #fce4ec;
+        color: #c62828;
+    }
+    
+    /* ===== TITRE ===== */
+    .odoo-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a2332;
         margin-bottom: 24px;
         padding-bottom: 16px;
-        border-bottom: 2px solid #e8edf3;
+        border-bottom: 2px solid #eef2f6;
         display: flex;
         align-items: center;
-        gap: 12px;
+        justify-content: space-between;
     }
-    .odoo-title .badge { background: #e8edf3; padding: 2px 16px; border-radius: 20px; font-size: 12px; color: #6b7a8f; }
     
-    /* Logo Sidebar */
-    .sidebar-logo {
-        text-align: center;
-        padding: 20px 0 24px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        margin-bottom: 16px;
+    .odoo-title .badge {
+        background: #eef2f6;
+        padding: 4px 16px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7a8f;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
     }
-    .sidebar-logo h2 { color: white !important; font-weight: 700 !important; font-size: 24px !important; margin: 0 !important; }
-    .sidebar-logo .sub { color: #6b8cae !important; font-size: 12px !important; }
-    .sidebar-logo .icon { font-size: 48px; }
     
-    /* Buttons */
+    /* ===== BOUTONS ===== */
     .stButton button {
-        background: #2c3e6b !important;
-        color: white !important;
+        background: linear-gradient(135deg, #2c3e6b 0%, #1a2b4a 100%) !important;
+        color: #ffffff !important;
         border: none !important;
         border-radius: 8px !important;
         padding: 8px 24px !important;
-        font-weight: 500 !important;
-        transition: all 0.3s !important;
-    }
-    .stButton button:hover {
-        background: #1a2b4a !important;
-        box-shadow: 0 4px 16px rgba(44, 62, 107, 0.3) !important;
-        transform: translateY(-1px) !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 8px rgba(44, 62, 107, 0.2) !important;
     }
     
-    /* Badges */
+    .stButton button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(44, 62, 107, 0.35) !important;
+        background: linear-gradient(135deg, #1a2b4a 0%, #0d1520 100%) !important;
+    }
+    
+    /* ===== BADGES ODOO ===== */
     .badge-odoo {
-        padding: 3px 14px;
+        padding: 4px 14px;
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
         display: inline-block;
+        letter-spacing: 0.2px;
     }
-    .badge-blue { background: #e3f0ff; color: #1a56db; }
-    .badge-green { background: #e6f7e6; color: #059669; }
-    .badge-yellow { background: #fff8e1; color: #d97706; }
-    .badge-red { background: #fde8e8; color: #dc2626; }
     
-    /* Tables */
+    .badge-primary { background: #e3f0ff; color: #1a56db; }
+    .badge-success { background: #e6f7e6; color: #059669; }
+    .badge-warning { background: #fff8e1; color: #d97706; }
+    .badge-danger { background: #fde8e8; color: #dc2626; }
+    .badge-info { background: #e0f2fe; color: #0284c7; }
+    .badge-purple { background: #ede9fe; color: #7c3aed; }
+    
+    /* ===== TABLEAU ===== */
     .dataframe {
         border-radius: 8px !important;
-        border: 1px solid #e8edf3 !important;
+        border: 1px solid #eef2f6 !important;
+        overflow: hidden !important;
     }
+    
     .dataframe thead th {
         background: #f8fafc !important;
-        color: #1a2b4a !important;
+        color: #1a2332 !important;
         font-weight: 600 !important;
+        font-size: 12px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
         padding: 12px 16px !important;
+        border-bottom: 2px solid #eef2f6 !important;
     }
-    .dataframe tbody td { padding: 10px 16px !important; }
-    .dataframe tbody tr:hover { background: #f8fafc !important; }
     
-    /* Expander */
+    .dataframe tbody td {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid #f1f4f8 !important;
+        color: #1a2332 !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background: #f8fafc !important;
+    }
+    
+    /* ===== EXPANDER ===== */
     .streamlit-expanderHeader {
         background: #f8fafc !important;
-        border-radius: 8px !important;
-        border: 1px solid #e8edf3 !important;
+        border-radius: 10px !important;
+        border: 1px solid #eef2f6 !important;
         font-weight: 600 !important;
-        color: #1a2b4a !important;
+        color: #1a2332 !important;
+        padding: 12px 16px !important;
+        transition: all 0.2s ease !important;
     }
     
-    /* Login */
-    .login-container {
-        max-width: 400px;
-        margin: 80px auto;
-        padding: 40px;
+    .streamlit-expanderHeader:hover {
+        background: #f1f4f8 !important;
+        border-color: #dce3ec !important;
+    }
+    
+    /* ===== INPUTS ===== */
+    .stTextInput input, .stSelectbox select, .stTextArea textarea, .stDateInput input, .stNumberInput input {
+        border-radius: 8px !important;
+        border: 1px solid #dce3ec !important;
+        padding: 8px 14px !important;
+        font-size: 13px !important;
+        transition: all 0.2s ease !important;
+        background: #ffffff !important;
+        color: #1a2332 !important;
+    }
+    
+    .stTextInput input:focus, .stSelectbox select:focus, .stTextArea textarea:focus {
+        border-color: #6b8cae !important;
+        box-shadow: 0 0 0 3px rgba(107, 140, 174, 0.15) !important;
+        outline: none !important;
+    }
+    
+    /* ===== METRIC ===== */
+    .stMetric {
         background: white;
+        padding: 16px 20px;
+        border-radius: 10px;
+        border: 1px solid #eef2f6;
+    }
+    
+    .stMetric .stMetricLabel {
+        color: #6b7a8f !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+    }
+    
+    .stMetric .stMetricValue {
+        color: #1a2332 !important;
+        font-weight: 700 !important;
+        font-size: 28px !important;
+    }
+    
+    /* ===== DIVIDER ===== */
+    hr {
+        margin: 28px 0 !important;
+        border: none !important;
+        border-top: 1px solid #eef2f6 !important;
+    }
+    
+    /* ===== LOGIN ===== */
+    .login-box {
+        max-width: 420px;
+        margin: 60px auto;
+        padding: 48px 40px;
+        background: #ffffff;
         border-radius: 16px;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.08);
-        border: 1px solid #e8edf3;
+        box-shadow: 0 8px 48px rgba(0,0,0,0.06);
+        border: 1px solid #eef2f6;
     }
-    .login-container h1 {
+    
+    .login-box .logo {
         text-align: center;
-        color: #1a2b4a;
-        font-size: 28px;
-        margin-bottom: 8px;
-    }
-    .login-container .sub {
-        text-align: center;
-        color: #6b7a8f;
         margin-bottom: 32px;
+    }
+    
+    .login-box .logo .icon {
+        font-size: 48px;
+        display: block;
+    }
+    
+    .login-box .logo h1 {
+        color: #1a2332;
+        font-size: 26px;
+        font-weight: 700;
+        margin: 8px 0 4px 0;
+    }
+    
+    .login-box .logo p {
+        color: #6b7a8f;
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    .login-box .stButton button {
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 15px !important;
+    }
+    
+    /* ===== CONTAINER ===== */
+    .main-container {
+        padding: 20px 32px 32px 32px;
+    }
+    
+    @media (max-width: 768px) {
+        .main-container {
+            padding: 16px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -251,24 +470,27 @@ st.markdown("""
 # ========== LOGIN ==========
 if not st.session_state.logged_in:
     st.markdown("""
-    <div class="login-container">
-        <h1>🏥 MediCare</h1>
-        <p class="sub">Gestion Médicale Professionnelle</p>
+    <div class="login-box">
+        <div class="logo">
+            <span class="icon">🏥</span>
+            <h1>MediCare</h1>
+            <p>Gestion Médicale Professionnelle</p>
+        </div>
     """, unsafe_allow_html=True)
     
-    username = st.text_input("Nom d'utilisateur", key="login_user")
-    password = st.text_input("Mot de passe", type="password", key="login_pass")
+    username = st.text_input("Nom d'utilisateur", placeholder="admin", key="login_user")
+    password = st.text_input("Mot de passe", type="password", placeholder="••••••••", key="login_pass")
     
     if st.button("🔐 Se connecter", use_container_width=True):
         if login(username, password):
-            st.success("✅ Connexion réussie !")
+            st.success("✅ Connexion réussie")
             st.rerun()
         else:
             st.error("❌ Identifiants incorrects")
     
     st.markdown("""
-    <p style="text-align: center; color: #6b7a8f; font-size: 12px; margin-top: 16px;">
-        Admin: admin / admin123
+    <p style="text-align: center; color: #6b7a8f; font-size: 12px; margin-top: 20px;">
+        🔑 admin / admin123
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -277,10 +499,10 @@ if not st.session_state.logged_in:
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.markdown("""
-    <div class="sidebar-logo">
-        <div class="icon">🏥</div>
-        <h2>MediCare</h2>
-        <div class="sub">Gestion Médicale</div>
+    <div class="odoo-logo">
+        <span class="icon">🏥</span>
+        <h1>MediCare</h1>
+        <div class="sub">Medical Management</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -292,18 +514,20 @@ with st.sidebar:
         "📋 Consultations",
         "💰 Factures",
         "📈 Statistiques",
-        "👤 Utilisateurs"
+        "⚙️ Administration"
     ])
     
-    st.markdown("---")
-    st.markdown(f"""
-    <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-top: 20px;">
-        <p style="color: #6b8cae; font-size: 12px; margin: 0; text-align: center;">
-            <strong>{st.session_state.user.get('nom', '')}</strong><br>
-            {st.session_state.user.get('role', '')}
-        </p>
+    st.markdown("""
+    <div class="sidebar-user">
+        <div class="name">👤 {}</div>
+        <div class="role">{}</div>
+        <span class="badge-role">{}</span>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(
+        st.session_state.user.get('nom', '') + ' ' + st.session_state.user.get('prenom', ''),
+        st.session_state.user.get('role', ''),
+        st.session_state.user.get('role', '')
+    ), unsafe_allow_html=True)
     
     if st.button("🚪 Déconnexion", use_container_width=True):
         st.session_state.logged_in = False
@@ -345,27 +569,30 @@ if menu == "📊 Tableau de bord":
     with col1:
         st.markdown(f"""
         <div class="odoo-card">
-            <div class="icon">👥</div>
-            <div class="number">{len(patients)}</div>
-            <div class="label">Patients</div>
+            <div class="card-icon">👥</div>
+            <div class="card-number">{len(patients)}</div>
+            <div class="card-label">Patients</div>
+            <span class="card-trend trend-up">▲ 12%</span>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"""
         <div class="odoo-card">
-            <div class="icon">👨‍⚕️</div>
-            <div class="number">{len(medecins)}</div>
-            <div class="label">Médecins</div>
+            <div class="card-icon">👨‍⚕️</div>
+            <div class="card-number">{len(medecins)}</div>
+            <div class="card-label">Médecins</div>
+            <span class="card-trend trend-up">▲ 5%</span>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown(f"""
         <div class="odoo-card">
-            <div class="icon">📅</div>
-            <div class="number">{len(rdvs)}</div>
-            <div class="label">Rendez-vous</div>
+            <div class="card-icon">📅</div>
+            <div class="card-number">{len(rdvs)}</div>
+            <div class="card-label">Rendez-vous</div>
+            <span class="card-trend trend-up">▲ 8%</span>
         </div>
         """, unsafe_allow_html=True)
     
@@ -373,19 +600,25 @@ if menu == "📊 Tableau de bord":
         total = factures["montant"].sum() if len(factures) > 0 else 0
         st.markdown(f"""
         <div class="odoo-card">
-            <div class="icon">💰</div>
-            <div class="number">{total:,.0f}€</div>
-            <div class="label">Chiffre d'affaires</div>
+            <div class="card-icon">💰</div>
+            <div class="card-number">{total:,.0f}€</div>
+            <div class="card-label">Chiffre d'affaires</div>
+            <span class="card-trend trend-up">▲ 15%</span>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-        st.subheader("📋 Derniers rendez-vous")
+        st.markdown("""
+        <div class="odoo-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span style="font-weight: 600; color: #1a2332; font-size: 15px;">📋 Derniers rendez-vous</span>
+                <span class="badge-odoo badge-primary">5 derniers</span>
+            </div>
+        """, unsafe_allow_html=True)
         if len(rdvs) > 0:
             st.dataframe(rdvs[["patient_id", "medecin_id", "date", "statut"]].tail(5), use_container_width=True)
         else:
@@ -393,12 +626,17 @@ if menu == "📊 Tableau de bord":
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-        st.subheader("📊 Rendez-vous par statut")
+        st.markdown("""
+        <div class="odoo-card">
+            <div style="font-weight: 600; color: #1a2332; font-size: 15px; margin-bottom: 16px;">📊 Répartition</div>
+        """, unsafe_allow_html=True)
         if len(rdvs) > 0:
             stats = rdvs["statut"].value_counts()
-            fig = px.pie(values=stats.values, names=stats.index, color_discrete_sequence=["#2c3e6b", "#059669", "#d97706", "#dc2626"])
-            fig.update_layout(height=250, margin=dict(l=0, r=0, t=0, b=0))
+            fig = px.pie(values=stats.values, names=stats.index, 
+                        color_discrete_sequence=["#2c3e6b", "#059669", "#d97706", "#dc2626"],
+                        hole=0.3)
+            fig.update_layout(height=250, margin=dict(l=0, r=0, t=0, b=0), showlegend=True)
+            fig.update_traces(textposition='inside', textinfo='percent')
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Aucune donnée")
@@ -430,18 +668,14 @@ elif menu == "👥 Patients":
                         INSERT INTO patients (nom, prenom, date_naissance, sexe, telephone, email, adresse, allergies, antecedents, date_creation)
                         VALUES (?,?,?,?,?,?,?,?,?,?)
                     """, (nom, prenom, date_naissance, sexe, telephone, email, adresse, allergies, antecedents, date.today()))
-                    st.success(f"✅ Patient {nom} {prenom} ajouté !")
+                    st.success("✅ Patient ajouté !")
                     st.cache_data.clear()
                     st.rerun()
                 else:
                     st.error("Nom et Prénom obligatoires.")
     
     st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-    patients = get_patients()
-    if len(patients) > 0:
-        st.dataframe(patients, use_container_width=True)
-    else:
-        st.info("Aucun patient")
+    st.dataframe(get_patients(), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== MÉDECINS ==========
@@ -466,18 +700,14 @@ elif menu == "👨‍⚕️ Médecins":
                         INSERT INTO medecins (nom, prenom, specialite, telephone, email, disponible)
                         VALUES (?,?,?,?,?,?)
                     """, (nom, prenom, specialite, telephone, email, disponible))
-                    st.success(f"✅ Dr {nom} {prenom} ajouté !")
+                    st.success("✅ Médecin ajouté !")
                     st.cache_data.clear()
                     st.rerun()
                 else:
                     st.error("Nom, Prénom et Spécialité obligatoires.")
     
     st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-    medecins = get_medecins()
-    if len(medecins) > 0:
-        st.dataframe(medecins, use_container_width=True)
-    else:
-        st.info("Aucun médecin")
+    st.dataframe(get_medecins(), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== RENDEZ-VOUS ==========
@@ -514,11 +744,7 @@ elif menu == "📅 Rendez-vous":
                     st.error("Patient et Médecin obligatoires.")
     
     st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-    rdvs = get_rdvs()
-    if len(rdvs) > 0:
-        st.dataframe(rdvs, use_container_width=True)
-    else:
-        st.info("Aucun rendez-vous")
+    st.dataframe(get_rdvs(), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== CONSULTATIONS ==========
@@ -556,11 +782,7 @@ elif menu == "📋 Consultations":
                     st.error("Patient, Médecin et Diagnostic obligatoires.")
     
     st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
-    consultations = get_consultations()
-    if len(consultations) > 0:
-        st.dataframe(consultations, use_container_width=True)
-    else:
-        st.info("Aucune consultation")
+    st.dataframe(get_consultations(), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== FACTURES ==========
@@ -633,9 +855,9 @@ elif menu == "📈 Statistiques":
         st.subheader("📅 Rendez-vous")
         if len(rdvs) > 0:
             stats = rdvs["statut"].value_counts()
-            fig = px.bar(x=stats.index, y=stats.values, color=stats.index, 
+            fig = px.bar(x=stats.index, y=stats.values, color=stats.index,
                         color_discrete_sequence=["#2c3e6b", "#059669", "#d97706", "#dc2626"])
-            fig.update_layout(height=300, margin=dict(l=0, r=0, t=0, b=0), showlegend=False)
+            fig.update_layout(height=280, margin=dict(l=0, r=0, t=0, b=0), showlegend=False)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Aucune donnée")
@@ -648,7 +870,8 @@ elif menu == "📈 Statistiques":
         st.subheader("💰 Factures")
         if len(factures) > 0:
             stats = factures["statut"].value_counts()
-            fig = px.pie(values=stats.values, names=stats.index, color_discrete_sequence=["#d97706", "#059669", "#dc2626"])
+            fig = px.pie(values=stats.values, names=stats.index,
+                        color_discrete_sequence=["#d97706", "#059669", "#dc2626"])
             fig.update_layout(height=250, margin=dict(l=0, r=0, t=0, b=0))
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -663,9 +886,9 @@ elif menu == "📈 Statistiques":
             st.dataframe(medecins[["nom", "prenom", "specialite"]].head(5), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ========== UTILISATEURS ==========
-elif menu == "👤 Utilisateurs":
-    st.markdown('<div class="odoo-title">👤 Utilisateurs <span class="badge">Administration</span></div>', unsafe_allow_html=True)
+# ========== ADMINISTRATION ==========
+elif menu == "⚙️ Administration":
+    st.markdown('<div class="odoo-title">⚙️ Administration <span class="badge">Système</span></div>', unsafe_allow_html=True)
     
     with st.expander("➕ Nouvel utilisateur", expanded=False):
         with st.form("add_user"):
@@ -684,7 +907,7 @@ elif menu == "👤 Utilisateurs":
                     try:
                         execute_query("INSERT INTO users (username, password, role, nom, prenom) VALUES (?,?,?,?,?)",
                                      (username, hashed, role, nom, prenom))
-                        st.success(f"✅ Utilisateur {username} ajouté !")
+                        st.success("✅ Utilisateur ajouté !")
                         st.rerun()
                     except:
                         st.error("Cet utilisateur existe déjà.")
@@ -693,8 +916,17 @@ elif menu == "👤 Utilisateurs":
     
     st.markdown('<div class="odoo-card">', unsafe_allow_html=True)
     users = fetch_query("SELECT id, username, role, nom, prenom FROM users")
-    if len(users) > 0:
-        st.dataframe(users, use_container_width=True)
-    else:
-        st.info("Aucun utilisateur")
+    st.dataframe(users, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="odoo-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: 600; color: #1a2332;">📊 Base de données</div>
+                <div style="color: #6b7a8f; font-size: 13px;">SQLite • medicare.db</div>
+            </div>
+            <span class="badge-odoo badge-success">✅ Actif</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
