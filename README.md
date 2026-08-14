@@ -1,5 +1,4 @@
-# 🏥 MediCare Pro
-
+# 🏥 MediGest Pro
 **Application de gestion médicale complète pour cabinets, cliniques et professionnels de santé.**
 
 ---
